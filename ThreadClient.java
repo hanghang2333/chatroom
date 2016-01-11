@@ -7,18 +7,18 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Scanner;
- //接收信息线程，即从服务器传过来的信息在这里处理
+ //receive message thread,handling the message from the server
     class ReadMessage extends Thread
-      { private BufferedReader sin;                                //buffer,缓冲区，io流
-        private boolean loginornot=false;                             //一个记录是否登录成功的标识符
-	    public  ReadMessage(BufferedReader sin)                    //初始化，入口参数为一个io缓冲区
+      { private BufferedReader sin; //buffer，IOstream
+        private boolean loginornot=false;   //a flag save the status of login or not
+	    public  ReadMessage(BufferedReader sin) //init
 	    {   this.sin=sin;}
 	    public void unlogined(String str) throws IOException
-		{   //在未登录情况下：只允许显示这些信息，包括未登录情况下的quit处理
+		{   //when unlogin,only these message can be display,contains the quit.
 			 if(str.equals("please login")||str.equals("Name exist, please choose anthoer name.")||str.equals("Invalid command")||(!loginornot&&str.equals("/quit")))
 	          { if(!(str.equals("/quit"))){
 		             System.out.println(str);}
-	             else{                                         //未login就quit，关闭socket线程，return退出客户端
+	             else{                                         //when status=unlogin,quit->close socket 
 	    	          System.out.println("you are quit");
 	    	          if(ThreadClient.socket!=null)
 	                  ThreadClient.socket.close();
@@ -28,10 +28,10 @@ import java.util.Scanner;
 		public void logined(String str) throws IOException
 		{
 			if(!(str.equals("OK"))&&!(str.contains("/quit")))
-            {                     //不显示这些命令类的消息，进行单独处理
+            {                     //do not dsiplay these command,just give them to server to handle.
                 System.out.println(str);  }                 
            else if(str.contains("/quit"))
-           {                  //已经登录了之后输入/quit。
+           {                  //status=logined,quit
                System.out.println("you are quit");
                if(ThreadClient.socket!=null)
                ThreadClient.socket.close();
@@ -44,10 +44,10 @@ import java.util.Scanner;
 		       str=sin.readLine();                                 
 		       unlogined(str);
 		       if(str.equals("OK"))                                
-		    	   //服务端端检测到登录成功后会发一个OK过来，这里用这个作为标志来进行状态转换
+		    	   //when the server tell login success,it will give a OK as a flag
 		           { loginornot=true;}
 		       if(loginornot)
-		            {      //已登录情况下：
+		            {      //status=logined
 			            logined(str); }
 	           }}catch(IOException e)
 	               {e.printStackTrace();System.out.println("Something is wrong in client-ReadMessage");}
@@ -58,17 +58,17 @@ import java.util.Scanner;
             	         }catch(Exception e){e.printStackTrace();}
                    }
             }}         
-//发送给服务器端的线程。
+//the thread responsble for send message
  class SendMessage extends Thread
       { 
  	    private PrintWriter sout;     
- 	    public  SendMessage(PrintWriter sout)    //初始化函数
+ 	    public  SendMessage(PrintWriter sout)   
  	        {this.sout=sout;}
 		public void run()
               {try{
- 	           while(true){   //检测键盘输入，发送到服务器端再进行检测处理
+ 	           while(true){   //keyboard,send messgae to server
 	                      String test=ThreadClient.input.nextLine();
-	                      if(test!=null){        //不为空
+	                      if(test!=null){        //not null
 	        	          sout.println(test);}	 }
  	                  }catch(Exception e){
 	        	         e.printStackTrace();System.out.println("Something is wrong in client-WriteMessage");
@@ -81,19 +81,19 @@ import java.util.Scanner;
 					                             } catch (IOException e) {e.printStackTrace();}
 	                                         }	
                }}
-//ThreadClient类，客户端
+//ThreadClient Class 
  public class ThreadClient{                                   
 	    public static Socket socket;
 	    public static Scanner input=new Scanner(System.in);
 	    public static void main(String[] args)throws IOException,InterruptedException
-            {     InetAddress addr=InetAddress.getByName("localhost");//给定主机名获取ip
-    		      socket=new Socket(addr,12345);              //到服务器的套接字
-        	      BufferedReader sin;                         //读入缓存
-        	      PrintWriter sout;                           //发出缓存
+            {     InetAddress addr=InetAddress.getByName("localhost");//just test,given the hostname to get ip
+    		      socket=new Socket(addr,12345);    
+        	      BufferedReader sin;                         
+        	      PrintWriter sout;                           
 	    	try{          	  
             	  sin=new BufferedReader(new InputStreamReader(socket.getInputStream()));
           	      sout=new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())),true);
             	  new ReadMessage(sin).start();
             	  new SendMessage(sout).start();           		 
-            	     } catch (IOException e) {e.printStackTrace();}}//在命令行打印出异常出现在程序中出错的位置
+            	     } catch (IOException e) {e.printStackTrace();}}
                         }

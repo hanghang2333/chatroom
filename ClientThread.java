@@ -45,7 +45,7 @@ import javax.swing.JTextArea;
         public  ClientThread() throws IOException 
 	    { 
         	 InetAddress addr;
-			addr = InetAddress.getByName("localhost");
+			addr = InetAddress.getByName("192.168.1.103");
 			client=new Socket(addr,12345);
 		    sin=new BufferedReader(new InputStreamReader(client.getInputStream()));
      	    sout=new PrintWriter(new BufferedWriter(new OutputStreamWriter(client.getOutputStream())),true);
